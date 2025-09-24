@@ -15,6 +15,10 @@ st.caption("Mode: REST-only Firecrawl client")
 st.session_state.openai_api_key = st.secrets.get("OPENAI_API_KEY", st.session_state.get("openai_api_key", ""))
 st.session_state.firecrawl_api_key = st.secrets.get("FIRECRAWL_API_KEY", st.session_state.get("firecrawl_api_key", ""))
 
+# Set OpenAI key from secrets if present
+if st.session_state.openai_api_key:
+    set_default_openai_key(st.session_state.openai_api_key)
+
 # Sidebar for API keys
 with st.sidebar:
     st.title("API Configuration")
@@ -70,6 +74,10 @@ async def deep_research(query: str, max_depth: int, time_limit: int, max_urls: i
             "sources_count": len(data.get("sources", [])),
             "sources": data.get("sources", []),
         }
+    except requests.HTTPError as e:
+        msg = e.response.text if e.response is not None else str(e)
+        st.error(f"Deep research HTTP error: {msg}")
+        return {"error": msg, "success": False}
     except Exception as e:
         st.error(f"Deep research error: {str(e)}")
         return {"error": str(e), "success": False}
